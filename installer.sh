@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHANNEL="alpha"
+CHANNEL=""
 BRANCH="master"
 NAME="PocketMine-MP"
 BUILD_URL=""
@@ -125,10 +125,10 @@ if [[ "$BUILD_URL" != "" && "$CHANNEL" == "custom" ]]; then
 	VERSION_DOWNLOAD="$BUILD_URL"
 	MCPE_VERSION="unknown"
 	PHP_VERSION="unknown"
-else
-	echo "[*] Retrieving latest build data for channel \"$CHANNEL\""
+fi
 
-	VERSION_DATA=$(download_file "https://jenkins.pmmp.io/job/PocketMine-MP/$(tr '[:lower:]' '[:upper:]' <<< ${CHANNEL:0:1})${CHANNEL:1}/api/json?pretty=true&tree=url,artifacts[fileName],number,timestamp")
+function get_build_data {
+	VERSION_DATA=$(download_file "https://jenkins.pmmp.io/job/PocketMine-MP/$(tr '[:lower:]' '[:upper:]' <<< ${1:0:1})${1:1}/api/json?pretty=true&tree=url,artifacts[fileName],number,timestamp")
 
 	if [ "$VERSION_DATA" != "" ]; then
 		FILENAME="unknown"
@@ -142,11 +142,11 @@ else
 			fi
 		done
 		if [ "$FILENAME" == "unknown" ]; then
-			echo "[!] Couldn't determine filename of artifact to download"
-			exit 1
+			echo "error - couldn't determine filename of artifact to download"
+			return 1
 		fi
 
-		BUILD_INFO_JSON=$(download_file "https://jenkins.pmmp.io/job/PocketMine-MP/$(tr '[:lower:]' '[:upper:]' <<< ${CHANNEL:0:1})${CHANNEL:1}/artifact/build_info.json")
+		BUILD_INFO_JSON=$(download_file "https://jenkins.pmmp.io/job/PocketMine-MP/$(tr '[:lower:]' '[:upper:]' <<< ${1:0:1})${1:1}/artifact/build_info.json")
 
 		VERSION=$(parse_json "$BUILD_INFO_JSON" pm_version)
 		BUILD=$(parse_json "$BUILD_INFO_JSON" build_number)
@@ -177,8 +177,8 @@ else
 		fi
 
 		if [ "$VERSION" == "" ]; then
-			echo "[!] Couldn't get the latest $NAME version"
-			exit 1
+			echo "error - couldn't get the latest $NAME version"
+			return 1
 		fi
 
 		GPG_BIN=""
@@ -206,14 +206,44 @@ else
 				ENABLE_GPG="no"
 			fi
 		fi
+
+		echo "Found $NAME $BASE_VERSION (build $BUILD) for Minecraft: PE v$MCPE_VERSION (PHP $PHP_VERSION, API $API_VERSION), released on $VERSION_DATE_STRING"
 	else
-		echo "[!] Couldn't download version information automatically from Jenkins server."
-		exit 1
+		echo "error - couldn't download version information for channel \"$1\""
+		return 1
 	fi
+
+	return 0
+}
+
+if [ "$CHANNEL" == "" ]; then
+	echo "[*] No channel specified, getting available builds..."
+	CHANNELS=( development alpha beta stable )
+
+	for (( j=0; j<${#CHANNELS[@]}; j++ ))
+	do
+		printf "%15s: " ${CHANNELS[$j]}
+		get_build_data "${CHANNELS[$j]}"
+	done
+
+	while
+		echo -n "[?] Select a channel: "
+		read CHANNEL
+
+	do
+		for c in ${CHANNELS[@]}; do
+			[[ "$CHANNEL" == "$c" ]] && break 2
+		done
+		echo "[!] Invalid channel name \"$CHANNEL\""
+	done
 fi
 
-echo "[*] Found $NAME $BASE_VERSION (build $BUILD) for Minecraft: PE v$MCPE_VERSION (PHP $PHP_VERSION, API $API_VERSION)"
-echo "[*] This $CHANNEL build was released on $VERSION_DATE_STRING"
+echo "[*] Retrieving latest build data for channel \"$CHANNEL\""
+echo -n "[*] "
+get_build_data "$CHANNEL"
+if [ $? -ne 0 ]; then
+	exit 1
+fi
 
 if [ "$ENABLE_GPG" == "yes" ]; then
 	echo "[+] The build was signed, will check signature"
