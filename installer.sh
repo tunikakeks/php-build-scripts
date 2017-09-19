@@ -228,7 +228,7 @@ if [ "$CHANNEL" == "" ]; then
 
 	while
 		echo -n "[?] Select a channel: "
-		read CHANNEL
+		read CHANNEL < /dev/tty
 
 	do
 		for c in ${CHANNELS[@]}; do
