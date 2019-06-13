@@ -27,6 +27,7 @@ set PHP_DS_VER=2ddef84d3e9391c37599cb716592184315e23921
 set PHP_LEVELDB_VER=9bcae79f71b81a5c3ea6f67e45ae9ae9fb2775a5
 set PHP_CRYPTO_VER=5f26ac91b0ba96742cc6284cd00f8db69c3788b2
 set PHP_RECURSIONGUARD_VER=d6ed5da49178762ed81dc0184cd34ff4d3254720
+set PHP_PARALLEL_VER=e6752ecb74cc3202903fd133cb5337a8b18a4c92
 
 set script_path=%~dp0
 set log_file=%script_path%compile.log
@@ -164,6 +165,7 @@ call :get-extension-zip-from-github "igbinary"              "%PHP_IGBINARY_VER%"
 call :get-extension-zip-from-github "ds"                    "%PHP_DS_VER%"                    "php-ds"   "ext-ds"                  || exit 1
 call :get-extension-zip-from-github "leveldb"               "%PHP_LEVELDB_VER%"               "reeze"    "php-leveldb"             || exit 1
 call :get-extension-zip-from-github "recursionguard"        "%PHP_RECURSIONGUARD_VER%"        "pmmp"     "ext-recursionguard"      || exit 1
+call :get-extension-zip-from-github "parallel"              "%PHP_PARALLEL_VER%"              "dktapps"  "parallel"                || exit 1
 
 call :pm-echo " - crypto: downloading %PHP_CRYPTO_VER%..."
 git clone https://github.com/bukka/php-crypto.git crypto >>"%log_file%" 2>&1 || exit 1
@@ -219,6 +221,7 @@ call configure^
  --with-openssl^
  --with-pcre-jit^
  --with-pthreads=shared^
+ --with-parallel=shared^
  --with-sodium^
  --with-sqlite3=shared^
  --with-xml^
@@ -256,6 +259,7 @@ call :pm-echo "Generating php.ini..."
 (echo phar.readonly=0)>>"%php_ini%"
 (echo extension_dir=ext)>>"%php_ini%"
 (echo extension=php_pthreads.dll)>>"%php_ini%"
+(echo extension=php_parallel.dll)>>"%php_ini%"
 (echo extension=php_openssl.dll)>>"%php_ini%"
 (echo extension=php_chunkutils2.dll)>>"%php_ini%"
 (echo extension=php_igbinary.dll)>>"%php_ini%"

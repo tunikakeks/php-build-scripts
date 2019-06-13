@@ -26,6 +26,7 @@ EXT_IGBINARY_VERSION="3.0.1"
 EXT_DS_VERSION="2ddef84d3e9391c37599cb716592184315e23921"
 EXT_CRYPTO_VERSION="5f26ac91b0ba96742cc6284cd00f8db69c3788b2"
 EXT_RECURSIONGUARD_VERSION="d6ed5da49178762ed81dc0184cd34ff4d3254720"
+EXT_PARALLEL_VERSION="b2ea12bff284f57e601647e6653b21e9951fdf0c"
 
 function write_out {
 	echo "[$1] $2"
@@ -740,6 +741,8 @@ get_github_extension "leveldb" "$EXT_LEVELDB_VERSION" "reeze" "php-leveldb"
 
 get_github_extension "chunkutils2" "$EXT_CHUNKUTILS2_VERSION" "pmmp" "ext-chunkutils2"
 
+get_github_extension "parallel" "$EXT_PARALLEL_VERSION" "krakjoe" "parallel"
+
 
 echo -n "[PHP]"
 
@@ -831,6 +834,7 @@ $HAS_DEBUG \
 --enable-mbstring \
 --enable-calendar \
 --enable-pthreads \
+--enable-parallel \
 --disable-fileinfo \
 --disable-libxml \
 --disable-xml \
