@@ -6,7 +6,7 @@ GMP_VERSION="6.2.0"
 CURL_VERSION="curl-7_71_1"
 READLINE_VERSION="6.3"
 YAML_VERSION="0.2.5"
-LEVELDB_VERSION="10f59b56bec1db3ffe42ff265afe22182073e0e2"
+LEVELDB_VERSION="d066ad4d2638185c34558a35b4e379617af9b238"
 LIBXML_VERSION="2.9.10"
 LIBPNG_VERSION="1.6.37"
 LIBJPEG_VERSION="9d"
@@ -15,7 +15,7 @@ LIBZIP_VERSION="1.7.3"
 
 EXT_PTHREADS_VERSION="40ab4e9eea0c33160895e575be70243e082d3d10"
 EXT_YAML_VERSION="2.1.0"
-EXT_LEVELDB_VERSION="9bcae79f71b81a5c3ea6f67e45ae9ae9fb2775a5"
+EXT_LEVELDB_VERSION="2e3f740b55af1eb6dfc648dd451bcb7d6151c26c"
 EXT_POCKETMINE_CHUNKUTILS_VERSION="master"
 EXT_XDEBUG_VERSION="2.9.6"
 EXT_IGBINARY_VERSION="3.1.2"
@@ -549,25 +549,31 @@ echo " done!"
 if [ "$COMPILE_LEVELDB" == "yes" ]; then
 	#LevelDB
 	echo -n "[LevelDB] downloading $LEVELDB_VERSION..."
-	download_file "https://github.com/pmmp/leveldb-mcpe/archive/$LEVELDB_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
+	download_file "https://github.com/pmmp/leveldb/archive/$LEVELDB_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
 	#download_file "https://github.com/Mojang/leveldb-mcpe/archive/$LEVELDB_VERSION.tar.gz" | tar -zx >> "$DIR/install.log" 2>&1
-	mv leveldb-mcpe-$LEVELDB_VERSION leveldb
+	mv leveldb-$LEVELDB_VERSION leveldb
 	echo -n " checking..."
 	cd leveldb
+	if [ "$DO_STATIC" != "yes" ]; then
+		EXTRA_FLAGS="-DBUILD_SHARED_LIBS=ON"
+	else
+		EXTRA_FLAGS=""
+	fi
+	cmake . \
+		-DCMAKE_INSTALL_PREFIX="$DIR/bin/php7" \
+		-DCMAKE_PREFIX_PATH="$DIR/bin/php7" \
+		-DLEVELDB_BUILD_TESTS=OFF \
+		-DLEVELDB_BUILD_BENCHMARKS=OFF \
+		-DLEVELDB_SNAPPY=OFF \
+		-DLEVELDB_ZSTD=OFF \
+		-DLEVELDB_TCMALLOC=OFF \
+		-DCMAKE_BUILD_TYPE=Release \
+		$EXTRA_FLAGS \
+		>> "$DIR/install.log" 2>&1
 	echo -n " compiling..."
-	if [ "$DO_STATIC" == "yes" ]; then
-		LEVELDB_TARGET="staticlibs"
-	else
-		LEVELDB_TARGET="sharedlibs"
-	fi
-	INSTALL_PATH="$DIR/bin/php7/lib" CFLAGS="$CFLAGS -I$DIR/bin/php7/include" CXXFLAGS="$CXXFLAGS -I$DIR/bin/php7/include" LDFLAGS="$LDFLAGS -L$DIR/bin/php7/lib" make $LEVELDB_TARGET -j $THREADS >> "$DIR/install.log" 2>&1
+	make -j $THREADS >> "$DIR/install.log" 2>&1
 	echo -n " installing..."
-	if [ "$DO_STATIC" == "yes" ]; then
-		cp out-static/lib*.a "$DIR/bin/php7/lib/"
-	else
-		cp out-shared/libleveldb.* "$DIR/bin/php7/lib/"
-	fi
-	cp -r include/leveldb "$DIR/bin/php7/include/leveldb"
+	make install >> "$DIR/install.log" 2>&1
 	cd ..
 	echo " done!"
 fi
@@ -733,7 +739,7 @@ echo " done!"
 
 if [ "$COMPILE_LEVELDB" == "yes" ]; then
 	#PHP LevelDB
-	get_github_extension "leveldb" "$EXT_LEVELDB_VERSION" "reeze" "php-leveldb"
+	get_github_extension "leveldb" "$EXT_LEVELDB_VERSION" "pmmp" "php-leveldb"
 	HAS_LEVELDB=--with-leveldb="$DIR/bin/php7"
 else
 	HAS_LEVELDB=""
